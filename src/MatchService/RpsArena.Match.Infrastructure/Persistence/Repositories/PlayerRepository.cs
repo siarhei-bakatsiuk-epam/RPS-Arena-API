@@ -9,6 +9,9 @@ public sealed class PlayerRepository(MatchDbContext context) : IPlayerRepository
     public Task<Player?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default) =>
         context.Players.FirstOrDefaultAsync(p => p.Id == id, cancellationToken);
 
+    public Task<bool> ExistsAsync(Guid id, CancellationToken cancellationToken = default) =>
+        context.Players.AnyAsync(p => p.Id == id, cancellationToken);
+
     public Task<bool> UsernameExistsAsync(
         string username, Guid? excludingPlayerId = null, CancellationToken cancellationToken = default) =>
         context.Players.AnyAsync(

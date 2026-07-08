@@ -6,6 +6,8 @@ public interface IPlayerRepository
 {
     Task<Player?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default);
 
+    Task<bool> ExistsAsync(Guid id, CancellationToken cancellationToken = default);
+
     Task<bool> UsernameExistsAsync(
         string username, Guid? excludingPlayerId = null, CancellationToken cancellationToken = default);
 
