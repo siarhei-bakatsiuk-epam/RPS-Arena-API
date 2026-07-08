@@ -6,6 +6,7 @@ namespace RpsArena.Match.Infrastructure.Persistence;
 public class MatchDbContext(DbContextOptions<MatchDbContext> options) : DbContext(options)
 {
     public DbSet<Player> Players => Set<Player>();
+    public DbSet<Domain.Entities.Match> Matches => Set<Domain.Entities.Match>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
