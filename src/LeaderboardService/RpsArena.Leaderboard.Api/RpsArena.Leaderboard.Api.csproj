@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <ItemGroup>
+    <PackageReference Include="AspNetCore.HealthChecks.NpgSql" Version="9.0.0" />
+    <PackageReference Include="Swashbuckle.AspNetCore" Version="7.2.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\RpsArena.Leaderboard.Application\RpsArena.Leaderboard.Application.csproj" />
+    <ProjectReference Include="..\RpsArena.Leaderboard.Infrastructure\RpsArena.Leaderboard.Infrastructure.csproj" />
+  </ItemGroup>
+
+</Project>

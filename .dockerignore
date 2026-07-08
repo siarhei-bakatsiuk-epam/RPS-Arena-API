@@ -1,0 +1,24 @@
+# Build artifacts
+**/bin/
+**/obj/
+artifacts/
+
+# VCS / IDE
+.git/
+.gitignore
+.vs/
+.idea/
+**/*.user
+
+# Tests and docs are not needed in the service images
+tests/
+docs/
+*.md
+
+# Local env / secrets
+**/appsettings.*.local.json
+docker-compose*.yml
+.dockerignore
+
+# OS
+**/.DS_Store
