@@ -15,12 +15,9 @@ public static class DependencyInjection
         this IServiceCollection services,
         IConfiguration configuration)
     {
-        var connectionString = configuration.GetConnectionString("Default")
-            ?? throw new InvalidOperationException(
-                "Connection string 'Default' is not configured.");
-
-        services.AddDbContext<LeaderboardDbContext>(options => options
-            .UseNpgsql(connectionString, npgsql =>
+        // Resolve the connection string lazily from the final merged configuration.
+        services.AddDbContext<LeaderboardDbContext>((sp, options) => options
+            .UseNpgsql(ResolveConnectionString(sp), npgsql =>
             {
                 npgsql.MigrationsAssembly(typeof(LeaderboardDbContext).Assembly.FullName);
                 npgsql.EnableRetryOnFailure(
@@ -34,12 +31,16 @@ public static class DependencyInjection
         services.AddScoped<IPlayerStatsRepository, PlayerStatsRepository>();
         services.AddScoped<IProcessedMessageStore, ProcessedMessageStore>();
 
-        AddMessaging(services, configuration);
+        AddMessaging(services);
 
         return services;
     }
 
-    private static void AddMessaging(IServiceCollection services, IConfiguration configuration)
+    private static string ResolveConnectionString(IServiceProvider sp) =>
+        sp.GetRequiredService<IConfiguration>().GetConnectionString("Default")
+        ?? throw new InvalidOperationException("Connection string 'Default' is not configured.");
+
+    private static void AddMessaging(IServiceCollection services)
     {
         services.AddMassTransit(x =>
         {
@@ -48,8 +49,11 @@ public static class DependencyInjection
 
             x.UsingRabbitMq((context, cfg) =>
             {
+                var configuration = context.GetRequiredService<IConfiguration>();
+                var port = ushort.TryParse(configuration["RabbitMq:Port"], out var p) ? p : (ushort)5672;
                 cfg.Host(
                     configuration["RabbitMq:Host"] ?? "localhost",
+                    port,
                     configuration["RabbitMq:VirtualHost"] ?? "/",
                     host =>
                     {

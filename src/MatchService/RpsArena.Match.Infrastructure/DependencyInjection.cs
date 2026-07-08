@@ -15,12 +15,10 @@ public static class DependencyInjection
         this IServiceCollection services,
         IConfiguration configuration)
     {
-        var connectionString = configuration.GetConnectionString("Default")
-            ?? throw new InvalidOperationException(
-                "Connection string 'Default' is not configured.");
-
-        services.AddDbContext<MatchDbContext>(options => options
-            .UseNpgsql(connectionString, npgsql =>
+        // Resolve the connection string lazily (per DbContext) from the final
+        // merged configuration rather than capturing it at registration time.
+        services.AddDbContext<MatchDbContext>((sp, options) => options
+            .UseNpgsql(ResolveConnectionString(sp), npgsql =>
             {
                 npgsql.MigrationsAssembly(typeof(MatchDbContext).Assembly.FullName);
                 npgsql.EnableRetryOnFailure(
@@ -36,12 +34,16 @@ public static class DependencyInjection
         services.AddScoped<IPlayerRepository, PlayerRepository>();
         services.AddScoped<IMatchRepository, MatchRepository>();
 
-        AddMessaging(services, configuration);
+        AddMessaging(services);
 
         return services;
     }
 
-    private static void AddMessaging(IServiceCollection services, IConfiguration configuration)
+    private static string ResolveConnectionString(IServiceProvider sp) =>
+        sp.GetRequiredService<IConfiguration>().GetConnectionString("Default")
+        ?? throw new InvalidOperationException("Connection string 'Default' is not configured.");
+
+    private static void AddMessaging(IServiceCollection services)
     {
         services.AddMassTransit(x =>
         {
@@ -57,8 +59,13 @@ public static class DependencyInjection
 
             x.UsingRabbitMq((context, cfg) =>
             {
+                // Read from the built container's configuration (reflects all
+                // sources, including test overrides).
+                var configuration = context.GetRequiredService<IConfiguration>();
+                var port = ushort.TryParse(configuration["RabbitMq:Port"], out var p) ? p : (ushort)5672;
                 cfg.Host(
                     configuration["RabbitMq:Host"] ?? "localhost",
+                    port,
                     configuration["RabbitMq:VirtualHost"] ?? "/",
                     host =>
                     {
