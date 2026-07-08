@@ -39,3 +39,7 @@ dotnet_diagnostic.IDE0005.severity = warning
 
 # Using directive placement
 csharp_using_directive_placement = outside_namespace:warning
+
+# EF Core migrations are tool-generated; don't apply style analyzers to them.
+[**/Migrations/*.cs]
+generated_code = true

@@ -1,6 +1,5 @@
 using System.Reflection;
 using FluentValidation;
-using MediatR;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using RpsArena.Match.Application.Common.Behaviors;
