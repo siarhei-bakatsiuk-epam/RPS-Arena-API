@@ -1,6 +1,10 @@
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
+using RpsArena.Match.Application.Common.Models;
 using RpsArena.Match.Application.Features.Matches;
+using RpsArena.Match.Application.Features.Matches.GetById;
+using RpsArena.Match.Application.Features.Matches.GetList;
+using RpsArena.Match.Application.Features.Matches.GetPlayerMatches;
 using RpsArena.Match.Application.Features.Matches.Record;
 
 namespace RpsArena.Match.Api.Controllers;
@@ -39,6 +43,49 @@ public sealed class MatchesController(ISender mediator) : ControllerBase
         return result.AlreadyExisted
             ? Ok(result.Match)
             : Created($"/api/matches/{result.Match.Id}", result.Match);
+    }
+
+    /// <summary>Gets a match by id.</summary>
+    [HttpGet("{id:guid}")]
+    [ProducesResponseType(typeof(MatchDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<MatchDto>> GetById(Guid id, CancellationToken cancellationToken)
+    {
+        var match = await mediator.Send(new GetMatchByIdQuery(id), cancellationToken);
+        return Ok(match);
+    }
+
+    /// <summary>Lists matches with optional player/date filters and pagination.</summary>
+    [HttpGet]
+    [ProducesResponseType(typeof(PagedResult<MatchDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public async Task<ActionResult<PagedResult<MatchDto>>> GetList(
+        [FromQuery] Guid? playerId,
+        [FromQuery] DateTime? from,
+        [FromQuery] DateTime? to,
+        [FromQuery] int page = 1,
+        [FromQuery] int pageSize = 20,
+        CancellationToken cancellationToken = default)
+    {
+        var result = await mediator.Send(
+            new GetMatchesQuery(playerId, from, to, page, pageSize), cancellationToken);
+        return Ok(result);
+    }
+
+    /// <summary>Gets a specific player's match history (404 if the player is unknown).</summary>
+    [HttpGet("/api/players/{playerId:guid}/matches")]
+    [ProducesResponseType(typeof(PagedResult<MatchDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<PagedResult<MatchDto>>> GetPlayerMatches(
+        Guid playerId,
+        [FromQuery] int page = 1,
+        [FromQuery] int pageSize = 20,
+        CancellationToken cancellationToken = default)
+    {
+        var result = await mediator.Send(
+            new GetPlayerMatchesQuery(playerId, page, pageSize), cancellationToken);
+        return Ok(result);
     }
 }
 

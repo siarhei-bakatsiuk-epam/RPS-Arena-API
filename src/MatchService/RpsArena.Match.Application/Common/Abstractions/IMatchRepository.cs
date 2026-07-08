@@ -9,5 +9,13 @@ public interface IMatchRepository
     Task<MatchEntity?> GetByIdempotencyKeyAsync(
         Guid idempotencyKey, CancellationToken cancellationToken = default);
 
+    Task<(IReadOnlyList<MatchEntity> Items, int TotalCount)> GetPagedAsync(
+        Guid? playerId,
+        DateTime? from,
+        DateTime? to,
+        int page,
+        int pageSize,
+        CancellationToken cancellationToken = default);
+
     Task AddAsync(MatchEntity match, CancellationToken cancellationToken = default);
 }
