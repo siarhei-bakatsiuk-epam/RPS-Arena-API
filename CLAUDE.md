@@ -4,7 +4,7 @@ Test assignment (Senior .NET, Pearson/Faethm role): two microservices for a rock
 
 ## Status
 
-Planning complete (2026-07-08). No code yet — implementation follows `docs/implementation-plan.md` phases 0–8.
+Planning complete (2026-07-08). No code yet — execute `docs/implementation-steps.md` steps 1–21 in order; each step must end green and committed.
 
 ## Documentation (docs/)
 
@@ -12,6 +12,7 @@ Planning complete (2026-07-08). No code yet — implementation follows `docs/imp
 - `docs/v3.task.diagram 1.md` — architecture/sequence/ER diagrams (Mermaid)
 - `docs/implementation-plan.md` — full phased implementation plan (authoritative design doc)
 - `docs/requirements-coverage.md` — traceability matrix, 58/58 requirements mapped
+- `docs/implementation-steps.md` — 21 small always-green steps (the execution checklist; work top to bottom)
 
 ## Locked decisions
 
