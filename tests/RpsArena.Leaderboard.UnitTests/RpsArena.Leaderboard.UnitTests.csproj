@@ -20,9 +20,15 @@
     <Using Include="Xunit" />
   </ItemGroup>
 
+  <!-- Access to ASP.NET types so the API's exception handler can be unit-tested. -->
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+
   <ItemGroup>
     <ProjectReference Include="..\..\src\LeaderboardService\RpsArena.Leaderboard.Domain\RpsArena.Leaderboard.Domain.csproj" />
     <ProjectReference Include="..\..\src\LeaderboardService\RpsArena.Leaderboard.Application\RpsArena.Leaderboard.Application.csproj" />
+    <ProjectReference Include="..\..\src\LeaderboardService\RpsArena.Leaderboard.Api\RpsArena.Leaderboard.Api.csproj" />
   </ItemGroup>
 
 </Project>

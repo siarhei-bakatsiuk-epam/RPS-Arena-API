@@ -22,6 +22,8 @@ public static class ApiClientExtensions
 
 public sealed record PlayerResponse(Guid Id, string Username, string Email, DateTime CreatedAt);
 
+public sealed record PagedResponse<T>(IReadOnlyList<T> Items, int Page, int PageSize, int TotalCount);
+
 public sealed record MatchResponse(
     Guid Id, Guid PlayerOneId, Guid PlayerTwoId,
     int PlayerOneScore, int PlayerTwoScore, DateTime PlayedAt, Guid IdempotencyKey);

@@ -1,14 +1,5 @@
 namespace RpsArena.Match.Application.Common.Exceptions;
 
 /// <summary>Thrown when a requested resource does not exist. Mapped to HTTP 404.</summary>
-public sealed class NotFoundException : Exception
-{
-    public NotFoundException(string message) : base(message)
-    {
-    }
-
-    public NotFoundException(string resource, object key)
-        : base($"{resource} '{key}' was not found.")
-    {
-    }
-}
+public sealed class NotFoundException(string resource, object key)
+    : Exception($"{resource} '{key}' was not found.");
