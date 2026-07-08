@@ -3,6 +3,7 @@ using System.Security.Cryptography;
 using System.Text;
 using MediatR;
 using RpsArena.Contracts;
+using RpsArena.Match.Application.Common;
 using RpsArena.Match.Application.Common.Abstractions;
 using RpsArena.Match.Application.Common.Exceptions;
 using MatchEntity = RpsArena.Match.Domain.Entities.Match;
@@ -20,7 +21,7 @@ public sealed class RecordMatchHandler(
     {
         // timestamptz requires UTC; normalize once so the stored value, the
         // derived idempotency key, and the replay comparison all agree.
-        var playedAtUtc = NormalizeUtc(request.PlayedAt);
+        var playedAtUtc = UtcTimestamp.Normalize(request.PlayedAt);
         var key = request.IdempotencyKey ?? DeriveKey(request, playedAtUtc);
 
         // Fast path: already recorded under this key.
@@ -110,15 +111,6 @@ public sealed class RecordMatchHandler(
         var hash = SHA256.HashData(Encoding.UTF8.GetBytes(canonical));
         return new Guid(hash.AsSpan(0, 16));
     }
-
-    // Postgres timestamptz demands UTC. Treat an unspecified-kind timestamp as
-    // UTC (the API's canonical zone); convert Local/offset values to UTC.
-    private static DateTime NormalizeUtc(DateTime value) => value.Kind switch
-    {
-        DateTimeKind.Utc => value,
-        DateTimeKind.Unspecified => DateTime.SpecifyKind(value, DateTimeKind.Utc),
-        _ => value.ToUniversalTime(),
-    };
 
     // Postgres timestamptz has microsecond precision; align both sides before
     // comparing so a round-trip never causes a false "different payload".
