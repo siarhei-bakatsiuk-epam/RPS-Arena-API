@@ -55,4 +55,23 @@ public class RecordMatchValidatorTests
         var slightlyAhead = _clock.GetUtcNow().UtcDateTime.AddSeconds(30);
         Sut().Validate(Valid(at: slightlyAhead)).IsValid.Should().BeTrue();
     }
+
+    [Fact]
+    public void Interprets_naive_playedAt_as_utc_consistently_with_the_handler()
+    {
+        // "now" as a naive (unspecified-kind) timestamp — the validator must read
+        // it as UTC (not machine-local) so it is not spuriously rejected.
+        var naiveNow = DateTime.SpecifyKind(_clock.GetUtcNow().UtcDateTime, DateTimeKind.Unspecified);
+
+        Sut().Validate(Valid(at: naiveNow)).IsValid.Should().BeTrue();
+    }
+
+    [Fact]
+    public void Rejects_naive_future_playedAt()
+    {
+        var naiveFuture = DateTime.SpecifyKind(
+            _clock.GetUtcNow().UtcDateTime.AddHours(2), DateTimeKind.Unspecified);
+
+        Sut().Validate(Valid(at: naiveFuture)).IsValid.Should().BeFalse();
+    }
 }

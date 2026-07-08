@@ -104,6 +104,15 @@ curl -s "http://localhost:5002/api/leaderboard/players/$ALICE"
 The idempotency key for `POST /api/matches` may also be supplied via the
 `Idempotency-Key` header. All errors use RFC 7807 `application/problem+json`.
 
+**Idempotency key — recommendation.** Send a distinct `idempotencyKey` (or
+`Idempotency-Key` header) per match so retries are de‑duplicated safely. If you
+omit it, the server derives a deterministic key by hashing the payload
+(`playerOneId, playerTwoId, scores, playedAt` normalized to UTC) — so a repeat of
+the *same* request de‑duplicates, but two genuinely distinct matches that happen
+to share an identical payload (same pair, same score, same `playedAt`) would
+collapse into one. `playedAt` is accepted with or without a timezone offset and
+stored as UTC (a naive timestamp is interpreted as UTC).
+
 ## Running the tests
 
 ```bash

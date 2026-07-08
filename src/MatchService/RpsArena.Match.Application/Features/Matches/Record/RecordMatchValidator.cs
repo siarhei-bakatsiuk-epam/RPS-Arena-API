@@ -1,4 +1,5 @@
 using FluentValidation;
+using RpsArena.Match.Application.Common;
 
 namespace RpsArena.Match.Application.Features.Matches.Record;
 
@@ -21,9 +22,11 @@ public sealed class RecordMatchValidator : AbstractValidator<RecordMatchCommand>
         RuleFor(x => x.PlayerTwoScore).GreaterThanOrEqualTo(0);
         // Draws (equal scores, including 0:0) are intentionally allowed.
 
+        // Interpret playedAt exactly as the handler does (naive == UTC) so the
+        // future check and the stored value never disagree on the instant.
         RuleFor(x => x.PlayedAt)
             .Must(playedAt =>
-                playedAt.ToUniversalTime() <= clock.GetUtcNow().UtcDateTime + FutureTolerance)
+                UtcTimestamp.Normalize(playedAt) <= clock.GetUtcNow().UtcDateTime + FutureTolerance)
             .WithMessage("playedAt cannot be in the future.");
     }
 }

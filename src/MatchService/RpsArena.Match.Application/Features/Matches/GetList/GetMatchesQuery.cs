@@ -1,5 +1,6 @@
 using FluentValidation;
 using MediatR;
+using RpsArena.Match.Application.Common;
 using RpsArena.Match.Application.Common.Abstractions;
 using RpsArena.Match.Application.Common.Models;
 
@@ -33,8 +34,8 @@ public sealed class GetMatchesHandler(IMatchRepository matches)
     {
         var (items, totalCount) = await matches.GetPagedAsync(
             request.PlayerId,
-            NormalizeUtc(request.From),
-            NormalizeUtc(request.To),
+            UtcTimestamp.Normalize(request.From),
+            UtcTimestamp.Normalize(request.To),
             request.Page,
             request.PageSize,
             cancellationToken);
@@ -42,12 +43,4 @@ public sealed class GetMatchesHandler(IMatchRepository matches)
         var dtos = items.Select(MatchDto.FromEntity).ToList();
         return new PagedResult<MatchDto>(dtos, request.Page, request.PageSize, totalCount);
     }
-
-    // timestamptz parameters must be UTC; treat an unspecified-kind filter as UTC.
-    private static DateTime? NormalizeUtc(DateTime? value) => value switch
-    {
-        null => null,
-        { Kind: DateTimeKind.Unspecified } dt => DateTime.SpecifyKind(dt, DateTimeKind.Utc),
-        { } dt => dt.ToUniversalTime(),
-    };
 }

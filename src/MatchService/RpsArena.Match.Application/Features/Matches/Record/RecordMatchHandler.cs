@@ -3,6 +3,7 @@ using System.Security.Cryptography;
 using System.Text;
 using MediatR;
 using RpsArena.Contracts;
+using RpsArena.Match.Application.Common;
 using RpsArena.Match.Application.Common.Abstractions;
 using RpsArena.Match.Application.Common.Exceptions;
 using MatchEntity = RpsArena.Match.Domain.Entities.Match;
@@ -18,13 +19,16 @@ public sealed class RecordMatchHandler(
 {
     public async Task<RecordMatchResult> Handle(RecordMatchCommand request, CancellationToken cancellationToken)
     {
-        var key = request.IdempotencyKey ?? DeriveKey(request);
+        // timestamptz requires UTC; normalize once so the stored value, the
+        // derived idempotency key, and the replay comparison all agree.
+        var playedAtUtc = UtcTimestamp.Normalize(request.PlayedAt);
+        var key = request.IdempotencyKey ?? DeriveKey(request, playedAtUtc);
 
         // Fast path: already recorded under this key.
         var existing = await matches.GetByIdempotencyKeyAsync(key, cancellationToken);
         if (existing is not null)
         {
-            return Replay(existing, request);
+            return Replay(existing, request, playedAtUtc);
         }
 
         // Both players must exist (404 otherwise). Fetched (not just existence-
@@ -38,7 +42,7 @@ public sealed class RecordMatchHandler(
         var match = MatchEntity.Record(
             request.PlayerOneId, request.PlayerTwoId,
             request.PlayerOneScore, request.PlayerTwoScore,
-            request.PlayedAt, key);
+            playedAtUtc, key);
 
         await matches.AddAsync(match, cancellationToken);
 
@@ -68,15 +72,16 @@ public sealed class RecordMatchHandler(
                 throw;
             }
 
-            return Replay(raced, request);
+            return Replay(raced, request, playedAtUtc);
         }
 
         return new RecordMatchResult(MatchDto.FromEntity(match), AlreadyExisted: false);
     }
 
-    private static RecordMatchResult Replay(MatchEntity existing, RecordMatchCommand request)
+    private static RecordMatchResult Replay(
+        MatchEntity existing, RecordMatchCommand request, DateTime playedAtUtc)
     {
-        if (!PayloadMatches(existing, request))
+        if (!PayloadMatches(existing, request, playedAtUtc))
         {
             throw new ConflictException(
                 "The idempotency key has already been used for a match with different data.");
@@ -85,22 +90,23 @@ public sealed class RecordMatchHandler(
         return new RecordMatchResult(MatchDto.FromEntity(existing), AlreadyExisted: true);
     }
 
-    private static bool PayloadMatches(MatchEntity m, RecordMatchCommand r) =>
+    private static bool PayloadMatches(MatchEntity m, RecordMatchCommand r, DateTime playedAtUtc) =>
         m.PlayerOneId == r.PlayerOneId &&
         m.PlayerTwoId == r.PlayerTwoId &&
         m.PlayerOneScore == r.PlayerOneScore &&
         m.PlayerTwoScore == r.PlayerTwoScore &&
-        ToMicroseconds(m.PlayedAt) == ToMicroseconds(r.PlayedAt.ToUniversalTime());
+        ToMicroseconds(m.PlayedAt) == ToMicroseconds(playedAtUtc);
 
     /// <summary>
     /// Deterministic fallback key when the client omits one: SHA-256 over the
-    /// canonical payload, so repeated identical submissions still deduplicate.
+    /// canonical payload (with the timestamp normalized to UTC), so repeated
+    /// identical submissions still deduplicate.
     /// </summary>
-    private static Guid DeriveKey(RecordMatchCommand r)
+    private static Guid DeriveKey(RecordMatchCommand r, DateTime playedAtUtc)
     {
         var canonical = string.Create(
             CultureInfo.InvariantCulture,
-            $"{r.PlayerOneId:N}|{r.PlayerTwoId:N}|{r.PlayerOneScore}|{r.PlayerTwoScore}|{r.PlayedAt.ToUniversalTime():O}");
+            $"{r.PlayerOneId:N}|{r.PlayerTwoId:N}|{r.PlayerOneScore}|{r.PlayerTwoScore}|{playedAtUtc:O}");
 
         var hash = SHA256.HashData(Encoding.UTF8.GetBytes(canonical));
         return new Guid(hash.AsSpan(0, 16));
