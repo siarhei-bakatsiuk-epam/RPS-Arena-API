@@ -2,6 +2,7 @@ using System.Reflection;
 using FluentValidation;
 using MediatR;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using RpsArena.Match.Application.Common.Behaviors;
 
 namespace RpsArena.Match.Application;
@@ -25,6 +26,9 @@ public static class DependencyInjection
         });
 
         services.AddValidatorsFromAssembly(assembly, includeInternalTypes: true);
+
+        // Injectable clock so handlers are deterministic under test.
+        services.TryAddSingleton(TimeProvider.System);
 
         return services;
     }

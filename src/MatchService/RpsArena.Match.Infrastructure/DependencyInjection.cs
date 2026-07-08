@@ -1,7 +1,9 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using RpsArena.Match.Application.Common.Abstractions;
 using RpsArena.Match.Infrastructure.Persistence;
+using RpsArena.Match.Infrastructure.Persistence.Repositories;
 
 namespace RpsArena.Match.Infrastructure;
 
@@ -27,6 +29,9 @@ public static class DependencyInjection
             // Must match the design-time factory so the runtime model lines up
             // with the generated migrations.
             .UseSnakeCaseNamingConvention());
+
+        services.AddScoped<IUnitOfWork, UnitOfWork>();
+        services.AddScoped<IPlayerRepository, PlayerRepository>();
 
         return services;
     }
