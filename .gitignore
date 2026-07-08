@@ -1,0 +1,24 @@
+# Build output
+bin/
+obj/
+artifacts/
+
+# Test results / coverage
+TestResults/
+coverage*.xml
+*.trx
+
+# IDE
+.vs/
+.idea/
+*.user
+*.suo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Local env / secrets
+*.env
+appsettings.*.local.json
+docker-compose.override.yml
