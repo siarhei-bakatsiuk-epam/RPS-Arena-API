@@ -4,7 +4,7 @@ Test assignment (Senior .NET, Pearson/Faethm role): two microservices for a rock
 
 ## Status
 
-Planning complete (2026-07-08). No code yet — execute `docs/implementation-steps.md` steps 1–21 in order; each step must end green and committed.
+**Implementation complete (2026-07-08).** All 21 steps of `docs/implementation-steps.md` are done and committed on `develop` (pushed to origin). Both services build (Release, 0 warnings), 103 tests pass (94 unit + 9 Testcontainers integration), and `docker-compose up --build` cold-starts the full stack with the happy path verified end-to-end. 58/58 requirements audited against code (see `docs/requirements-coverage.md`). `main` still points at the initial docs commit — merge `develop` → `main` via PR to update the default branch.
 
 ## Documentation (docs/)
 
