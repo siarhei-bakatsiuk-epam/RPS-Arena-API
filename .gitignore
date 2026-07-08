@@ -5,6 +5,7 @@ artifacts/
 
 # Test results / coverage
 TestResults/
+CoverageReport/
 coverage*.xml
 *.trx
 

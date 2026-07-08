@@ -1,0 +1,83 @@
+name: CI
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+
+# Cancel superseded runs on the same ref.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  checks: write
+  pull-requests: write
+
+jobs:
+  build-test:
+    name: Build & test (unit + integration)
+    runs-on: ubuntu-latest
+    # GitHub-hosted Linux runners provide a Docker daemon, so the Testcontainers
+    # integration tests run without any extra setup.
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: global.json
+
+      - name: Restore
+        run: dotnet restore RpsArena.sln
+
+      - name: Build (Release, warnings-as-errors)
+        run: dotnet build RpsArena.sln -c Release --no-restore
+
+      - name: Test with coverage
+        run: >
+          dotnet test RpsArena.sln -c Release --no-build
+          --logger "trx"
+          --logger "console;verbosity=normal"
+          --collect:"XPlat Code Coverage"
+          --results-directory ${{ github.workspace }}/TestResults
+
+      - name: Publish test results
+        uses: EnricoMi/publish-unit-test-result-action@v2
+        if: ${{ !cancelled() }}
+        with:
+          check_name: Test results
+          files: ${{ github.workspace }}/TestResults/**/*.trx
+
+      - name: Generate coverage report
+        if: ${{ !cancelled() }}
+        uses: danielpalme/ReportGenerator-GitHub-Action@5.4.7
+        with:
+          reports: ${{ github.workspace }}/TestResults/*/coverage.cobertura.xml
+          targetdir: ${{ github.workspace }}/CoverageReport
+          reporttypes: Html;Cobertura;MarkdownSummaryGithub;TextSummary
+
+      - name: Add coverage to job summary
+        if: ${{ !cancelled() }}
+        run: cat ${{ github.workspace }}/CoverageReport/SummaryGithub.md >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Comment coverage on PR
+        if: ${{ github.event_name == 'pull_request' && !cancelled() }}
+        uses: marocchino/sticky-pull-request-comment@v2
+        with:
+          header: coverage
+          path: ${{ github.workspace }}/CoverageReport/SummaryGithub.md
+
+      - name: Upload test results & coverage
+        uses: actions/upload-artifact@v4
+        if: ${{ !cancelled() }}
+        with:
+          name: test-results-and-coverage
+          path: |
+            ${{ github.workspace }}/TestResults/**/*.trx
+            ${{ github.workspace }}/CoverageReport/**
+          if-no-files-found: warn
