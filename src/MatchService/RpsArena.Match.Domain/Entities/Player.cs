@@ -25,4 +25,12 @@ public class Player
 
     public static Player Register(string username, string email, DateTime createdAtUtc)
         => new(Guid.NewGuid(), username, email, createdAtUtc);
+
+    /// <summary>Updates the mutable profile fields. Format/length rules are
+    /// enforced by the command validator; uniqueness by the DB unique indexes.</summary>
+    public void Update(string username, string email)
+    {
+        Username = username;
+        Email = email;
+    }
 }

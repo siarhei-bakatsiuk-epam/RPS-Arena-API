@@ -36,6 +36,13 @@ public sealed class PlayerRepository(MatchDbContext context) : IPlayerRepository
         return (items, totalCount);
     }
 
+    // Wired to the matches table in Step 7 (it does not exist yet). Until then no
+    // matches can exist, so no player has any — returning false is correct for the
+    // current schema. The DB FK (ON DELETE RESTRICT) added in Step 7 is the
+    // ultimate guard; this pre-check just yields a friendlier 409 message.
+    public Task<bool> HasMatchesAsync(Guid playerId, CancellationToken cancellationToken = default) =>
+        Task.FromResult(false);
+
     public async Task AddAsync(Player player, CancellationToken cancellationToken = default) =>
         await context.Players.AddAsync(player, cancellationToken);
 

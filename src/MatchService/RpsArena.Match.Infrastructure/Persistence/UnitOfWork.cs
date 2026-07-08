@@ -18,17 +18,22 @@ public sealed class UnitOfWork(MatchDbContext context) : IUnitOfWork
         {
             return await context.SaveChangesAsync(cancellationToken);
         }
-        catch (DbUpdateException ex) when (ex.InnerException is PostgresException { SqlState: "23505" } pg)
+        // 23505 = unique_violation, 23503 = foreign_key_violation (e.g. deleting a
+        // player still referenced by a match under ON DELETE RESTRICT).
+        catch (DbUpdateException ex)
+            when (ex.InnerException is PostgresException { SqlState: "23505" or "23503" } pg)
         {
             throw new ConflictException(DescribeConflict(pg));
         }
     }
 
-    private static string DescribeConflict(PostgresException pg) => pg.ConstraintName switch
+    private static string DescribeConflict(PostgresException pg) => pg switch
     {
-        "ix_players_username" => "Username is already taken.",
-        "ix_players_email" => "Email is already registered.",
-        "ix_matches_idempotency_key" => "A match with this idempotency key already exists.",
+        { SqlState: "23503" } => "The player cannot be deleted because related matches exist.",
+        { ConstraintName: "ix_players_username" } => "Username is already taken.",
+        { ConstraintName: "ix_players_email" } => "Email is already registered.",
+        { ConstraintName: "ix_matches_idempotency_key" } =>
+            "A match with this idempotency key already exists.",
         _ => "The request conflicts with existing data.",
     };
 }

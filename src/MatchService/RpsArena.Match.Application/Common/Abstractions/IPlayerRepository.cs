@@ -15,6 +15,9 @@ public interface IPlayerRepository
     Task<(IReadOnlyList<Player> Items, int TotalCount)> GetPagedAsync(
         int page, int pageSize, CancellationToken cancellationToken = default);
 
+    /// <summary>True if the player appears in any recorded match (delete guard).</summary>
+    Task<bool> HasMatchesAsync(Guid playerId, CancellationToken cancellationToken = default);
+
     Task AddAsync(Player player, CancellationToken cancellationToken = default);
 
     void Remove(Player player);
