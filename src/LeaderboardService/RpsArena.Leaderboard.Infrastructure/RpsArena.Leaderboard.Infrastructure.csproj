@@ -1,0 +1,15 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <ItemGroup>
+    <ProjectReference Include="..\RpsArena.Leaderboard.Domain\RpsArena.Leaderboard.Domain.csproj" />
+    <ProjectReference Include="..\RpsArena.Leaderboard.Application\RpsArena.Leaderboard.Application.csproj" />
+    <ProjectReference Include="..\..\Shared\RpsArena.Contracts\RpsArena.Contracts.csproj" />
+  </ItemGroup>
+
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+</Project>
