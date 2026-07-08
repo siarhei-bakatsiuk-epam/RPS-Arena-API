@@ -1,5 +1,7 @@
 # RPS Arena API
 
+[![CI](https://github.com/siarhei-bakatsiuk-epam/RPS-Arena-API/actions/workflows/ci.yml/badge.svg)](https://github.com/siarhei-bakatsiuk-epam/RPS-Arena-API/actions/workflows/ci.yml)
+
 Two .NET 9 microservices for a rock‑paper‑scissors tournament platform:
 
 - **MatchService** — players CRUD, match recording & search; publishes `MatchRecorded`.
@@ -121,6 +123,13 @@ rootless/Colima setup, point Testcontainers at the socket:
 export DOCKER_HOST="unix://$HOME/.colima/default/docker.sock"
 export TESTCONTAINERS_DOCKER_SOCKET_OVERRIDE="/var/run/docker.sock"
 ```
+
+**CI** — [`.github/workflows/ci.yml`](.github/workflows/ci.yml) builds in Release
+(warnings‑as‑errors) and runs the full suite (unit + Testcontainers integration)
+on every push/PR to `main`/`develop`, publishing a test‑results check, a coverage
+summary in the job summary (and as a PR comment), and the HTML report as an
+artifact. GitHub's Linux runners provide Docker, so the integration tests need no
+extra configuration there.
 
 ## Design decisions
 
