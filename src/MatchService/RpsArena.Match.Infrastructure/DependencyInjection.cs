@@ -1,7 +1,9 @@
+using MassTransit;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using RpsArena.Match.Application.Common.Abstractions;
+using RpsArena.Match.Infrastructure.Messaging;
 using RpsArena.Match.Infrastructure.Persistence;
 using RpsArena.Match.Infrastructure.Persistence.Repositories;
 
@@ -34,6 +36,40 @@ public static class DependencyInjection
         services.AddScoped<IPlayerRepository, PlayerRepository>();
         services.AddScoped<IMatchRepository, MatchRepository>();
 
+        AddMessaging(services, configuration);
+
         return services;
+    }
+
+    private static void AddMessaging(IServiceCollection services, IConfiguration configuration)
+    {
+        services.AddMassTransit(x =>
+        {
+            // Transactional outbox: MatchRecorded is written to match_db in the
+            // same transaction as the match, then relayed to RabbitMQ.
+            x.AddEntityFrameworkOutbox<MatchDbContext>(o =>
+            {
+                o.UsePostgres();
+                o.UseBusOutbox();
+            });
+
+            x.SetKebabCaseEndpointNameFormatter();
+
+            x.UsingRabbitMq((context, cfg) =>
+            {
+                cfg.Host(
+                    configuration["RabbitMq:Host"] ?? "localhost",
+                    configuration["RabbitMq:VirtualHost"] ?? "/",
+                    host =>
+                    {
+                        host.Username(configuration["RabbitMq:Username"] ?? "guest");
+                        host.Password(configuration["RabbitMq:Password"] ?? "guest");
+                    });
+
+                cfg.ConfigureEndpoints(context);
+            });
+        });
+
+        services.AddScoped<IEventPublisher, MassTransitEventPublisher>();
     }
 }

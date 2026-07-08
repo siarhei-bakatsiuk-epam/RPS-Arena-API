@@ -1,3 +1,4 @@
+using MassTransit;
 using Microsoft.EntityFrameworkCore;
 using RpsArena.Match.Domain.Entities;
 
@@ -13,5 +14,9 @@ public class MatchDbContext(DbContextOptions<MatchDbContext> options) : DbContex
         // citext enables case-insensitive unique email without a functional index.
         modelBuilder.HasPostgresExtension("citext");
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(MatchDbContext).Assembly);
+
+        // MassTransit transactional outbox tables (InboxState/OutboxState/
+        // OutboxMessage) so publishing the event commits atomically with the match.
+        modelBuilder.AddTransactionalOutboxEntities();
     }
 }
