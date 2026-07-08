@@ -1,0 +1,16 @@
+using Microsoft.EntityFrameworkCore;
+using RpsArena.Match.Domain.Entities;
+
+namespace RpsArena.Match.Infrastructure.Persistence;
+
+public class MatchDbContext(DbContextOptions<MatchDbContext> options) : DbContext(options)
+{
+    public DbSet<Player> Players => Set<Player>();
+
+    protected override void OnModelCreating(ModelBuilder modelBuilder)
+    {
+        // citext enables case-insensitive unique email without a functional index.
+        modelBuilder.HasPostgresExtension("citext");
+        modelBuilder.ApplyConfigurationsFromAssembly(typeof(MatchDbContext).Assembly);
+    }
+}
