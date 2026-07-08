@@ -21,6 +21,12 @@ RUN dotnet publish src/LeaderboardService/RpsArena.Leaderboard.Api/RpsArena.Lead
 
 FROM mcr.microsoft.com/dotnet/aspnet:9.0 AS runtime
 WORKDIR /app
+
+# curl lets the compose healthcheck probe /health/ready from inside the container.
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends curl \
+    && rm -rf /var/lib/apt/lists/*
+
 COPY --from=build /app ./
 
 ENV ASPNETCORE_URLS=http://+:8080 \

@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.OpenApi.Models;
 using RpsArena.Leaderboard.Api.Middleware;
 using RpsArena.Leaderboard.Application;
@@ -22,6 +23,14 @@ builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
 builder.Services.AddLeaderboardApplication();
 builder.Services.AddLeaderboardInfrastructure(builder.Configuration);
 
+// Readiness checks: PostgreSQL + (via MassTransit) RabbitMQ. Liveness has no
+// dependency checks.
+builder.Services.AddHealthChecks()
+    .AddNpgSql(
+        sp => sp.GetRequiredService<IConfiguration>().GetConnectionString("Default")!,
+        name: "postgres",
+        tags: ["ready"]);
+
 var app = builder.Build();
 
 app.UseExceptionHandler();
@@ -34,6 +43,12 @@ app.UseSwaggerUI(options =>
 });
 
 app.MapControllers();
+
+app.MapHealthChecks("/health/live", new HealthCheckOptions { Predicate = _ => false });
+app.MapHealthChecks("/health/ready", new HealthCheckOptions
+{
+    Predicate = check => check.Tags.Contains("ready"),
+});
 
 // Apply migrations on startup (retries while PostgreSQL comes up).
 await app.Services.MigrateLeaderboardDatabaseAsync();
