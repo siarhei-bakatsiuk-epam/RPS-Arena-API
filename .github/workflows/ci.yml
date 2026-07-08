@@ -41,6 +41,7 @@ jobs:
       - name: Test with coverage
         run: >
           dotnet test RpsArena.sln -c Release --no-build
+          --settings coverlet.runsettings
           --logger "trx"
           --logger "console;verbosity=normal"
           --collect:"XPlat Code Coverage"

@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RunSettings>
+  <DataCollectionRunSettings>
+    <DataCollectors>
+      <DataCollector friendlyName="XPlat code coverage">
+        <Configuration>
+          <Format>cobertura</Format>
+          <!-- Coverage should measure hand-written logic. Exclude tool-generated
+               code so the number is honest, not inflated/distorted by it. -->
+          <ExcludeByFile>**/Migrations/*.cs</ExcludeByFile>
+          <!-- Design-time DbContext factories only run under `dotnet ef`. -->
+          <Exclude>[*]*DbContextFactory</Exclude>
+          <!-- Note: do NOT exclude CompilerGeneratedAttribute — it marks async/
+               iterator state machines, so excluding it drops all async method
+               bodies from coverage. -->
+          <ExcludeByAttribute>GeneratedCodeAttribute,ExcludeFromCodeCoverageAttribute</ExcludeByAttribute>
+          <SkipAutoProps>true</SkipAutoProps>
+        </Configuration>
+      </DataCollector>
+    </DataCollectors>
+  </DataCollectionRunSettings>
+</RunSettings>
