@@ -61,15 +61,14 @@ public static class DependencyInjection
                         host.Password(configuration["RabbitMq:Password"] ?? "guest");
                     });
 
-                // Retry on transient/concurrency failures, then dead-letter to _error.
+                // Optimistic-concurrency (xmin) conflicts are fast and transient,
+                // so retry quickly and often — exponential backoff would stall
+                // convergence under contention. After these are exhausted the
+                // message dead-letters to the _error queue.
                 cfg.UseMessageRetry(r =>
                 {
-                    r.Immediate(3);
-                    r.Exponential(
-                        retryLimit: 5,
-                        minInterval: TimeSpan.FromSeconds(1),
-                        maxInterval: TimeSpan.FromSeconds(30),
-                        intervalDelta: TimeSpan.FromSeconds(5));
+                    r.Immediate(5);
+                    r.Interval(25, TimeSpan.FromMilliseconds(200));
                 });
 
                 cfg.ConfigureEndpoints(context);
